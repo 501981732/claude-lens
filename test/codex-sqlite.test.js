@@ -10,14 +10,18 @@ test("readCodexState reads threads, spawn edges, and dynamic tools", async (t) =
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "codex-state-"));
   t.after(() => fs.rmSync(tmp, { recursive: true, force: true }));
   const created = await createCodexFixtureDb(tmp);
-  if (created && created.skipped) t.skip(created.reason);
+  if (created && created.skipped) return t.skip(created.reason);
 
   const result = await readCodexState(path.join(tmp, "state_5.sqlite"));
 
   assert.equal(result.available, true);
+  assert.equal(result.threads instanceof Map, true);
   assert.equal(result.threads.size, 2);
   assert.equal(result.spawnEdges.length, 1);
+  assert.equal(result.spawnEdges[0].parent_thread_id, "codex-parent-session");
+  assert.equal(result.spawnEdges[0].child_thread_id, "codex-child-session");
   assert.equal(result.dynamicTools.length, 1);
+  assert.equal(result.dynamicTools[0].name, "exec_command");
   assert.equal(result.threads.get("codex-child-session").agent_role, "explorer");
 });
 
