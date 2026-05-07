@@ -1,0 +1,8 @@
+{"timestamp":"2026-05-07T00:00:00.000Z","type":"session_meta","payload":{"id":"codex-parent-session","cwd":"/workspace/sample-project","cli_version":"0.1.0","model_provider":"openai","git":{"branch":"main","commit":"abc123"}}}
+{"timestamp":"2026-05-07T00:01:00.000Z","type":"turn_context","payload":{"cwd":"/workspace/sample-project","model":"gpt-5.3-codex","effort":"medium"}}
+{"timestamp":"2026-05-07T00:02:00.000Z","type":"response_item","payload":{"type":"message","role":"user","content":[{"type":"input_text","text":"请检查项目结构"}]}}
+{"timestamp":"2026-05-07T00:03:00.000Z","type":"response_item","payload":{"type":"message","role":"assistant","content":[{"type":"output_text","text":"我会先读取文件结构。"}]}}
+{"timestamp":"2026-05-07T00:04:00.000Z","type":"response_item","payload":{"type":"function_call","name":"exec_command","call_id":"call-1","arguments":"{\"cmd\":\"rg --files\",\"workdir\":\"/workspace/sample-project\"}"}}
+{"timestamp":"2026-05-07T00:04:01.000Z","type":"event_msg","payload":{"type":"exec_command_end","call_id":"call-1","exit_code":0,"duration_ms":120,"cwd":"/workspace/sample-project","cmd":"rg --files"}}
+{"timestamp":"2026-05-07T00:04:02.000Z","type":"event_msg","payload":{"type":"token_count","info":{"last_token_usage":{"input_tokens":1000,"cached_input_tokens":200,"output_tokens":300,"reasoning_output_tokens":50,"total_tokens":1350},"total_token_usage":{"input_tokens":5000,"cached_input_tokens":900,"output_tokens":1200,"reasoning_output_tokens":300,"total_tokens":7400}}}}
+not-json

@@ -13,6 +13,8 @@ function getConfig(env = process.env) {
   return {
     port: Number.parseInt(env.PORT || "3456", 10),
     claudeDir: env.CLAUDE_DIR || path.join(home, ".claude"),
+    codexDir: env.CODEX_DIR || path.join(home, ".codex"),
+    codexIncludeArchived: env.CODEX_INCLUDE_ARCHIVED === "true",
     rates: {
       input: numberFromEnv(env, "RATE_INPUT", 5.0) / 1e6,
       output: numberFromEnv(env, "RATE_OUTPUT", 25.0) / 1e6,
