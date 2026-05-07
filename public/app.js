@@ -27,6 +27,7 @@ const rangeFilter = document.getElementById("range-filter");
 const sourceFilter = document.getElementById("source-filter");
 const projectFilter = document.getElementById("project-filter");
 const refreshBtn = document.getElementById("refresh-btn");
+let renderSequence = 0;
 
 const sourceLabels = {
   "claude-code": "Claude Code",
@@ -181,12 +182,19 @@ function sourceOption(value, label, disabled = false) {
 }
 
 async function render() {
+  const sequence = ++renderSequence;
   nav.querySelectorAll(".nav-tab").forEach((tab) => tab.classList.toggle("active", tab.dataset.view === state.view));
   app.innerHTML = '<div class="loading">Loading...</div>';
   try {
-    app.innerHTML = await views[state.view].render({ state });
+    const view = state.view;
+    const content = await views[view].render({ state });
+    if (sequence === renderSequence && view === state.view) {
+      app.innerHTML = content;
+    }
   } catch (err) {
-    app.innerHTML = `<div class="error">${escapeHtml(err.message)}</div>`;
+    if (sequence === renderSequence) {
+      app.innerHTML = `<div class="error">${escapeHtml(err.message)}</div>`;
+    }
   }
 }
 
