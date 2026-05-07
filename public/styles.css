@@ -1,0 +1,187 @@
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: #0d1117;
+  color: #c9d1d9;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  font-size: 14px;
+  line-height: 1.45;
+}
+.app-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 24px 28px 16px;
+  border-bottom: 1px solid #21262d;
+}
+h1 { margin: 0; color: #58a6ff; font-size: 1.35rem; letter-spacing: 0; }
+.subtitle { margin: 4px 0 0; color: #8b949e; font-size: .78rem; }
+.top-nav {
+  display: flex;
+  gap: 4px;
+  padding: 12px 28px 0;
+  overflow-x: auto;
+}
+.nav-tab, .icon-btn, select {
+  background: #161b22;
+  border: 1px solid #30363d;
+  color: #c9d1d9;
+  border-radius: 6px;
+  font: inherit;
+}
+.nav-tab {
+  padding: 7px 12px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.nav-tab.active {
+  background: #1f6feb;
+  border-color: #388bfd;
+  color: #fff;
+}
+.icon-btn { padding: 7px 12px; cursor: pointer; }
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 14px 28px 20px;
+  border-bottom: 1px solid #161b22;
+}
+.filters label {
+  display: grid;
+  gap: 5px;
+  color: #8b949e;
+  font-size: .68rem;
+  text-transform: uppercase;
+}
+select { padding: 7px 10px; min-width: 150px; color: #f0f6fc; }
+.app-main { padding: 24px 28px 36px; }
+.view-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+h2 {
+  margin: 0;
+  font-size: 1rem;
+  color: #f0f6fc;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+.muted { color: #8b949e; }
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.panel {
+  background: #161b22;
+  border: 1px solid #21262d;
+  border-radius: 8px;
+  padding: 16px;
+  min-width: 0;
+}
+.panel h3 {
+  margin: 0 0 12px;
+  color: #8b949e;
+  font-size: .74rem;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+}
+.metric-label {
+  color: #8b949e;
+  font-size: .7rem;
+  text-transform: uppercase;
+}
+.metric-value {
+  margin-top: 4px;
+  color: #f0f6fc;
+  font-size: 1.45rem;
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.green { color: #7ee787; }
+.amber { color: #d29922; }
+.red { color: #f85149; }
+.blue { color: #79c0ff; }
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: .8rem;
+}
+th {
+  padding: 8px 10px;
+  text-align: left;
+  color: #8b949e;
+  border-bottom: 1px solid #30363d;
+  font-size: .68rem;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+td {
+  padding: 7px 10px;
+  border-bottom: 1px solid #161b22;
+  vertical-align: top;
+}
+tbody tr:hover td { background: #161b22; }
+.clickable { cursor: pointer; }
+.num { text-align: right; font-variant-numeric: tabular-nums; }
+.badge {
+  display: inline-block;
+  max-width: 260px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding: 2px 7px;
+  background: #1f2937;
+  color: #79c0ff;
+  border-radius: 4px;
+  font-size: .72rem;
+}
+.two-col {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(320px, .8fr);
+  gap: 16px;
+}
+.detail-panel {
+  position: sticky;
+  top: 12px;
+  max-height: 72vh;
+  overflow: auto;
+}
+.detail-row {
+  padding: 10px 0;
+  border-bottom: 1px solid #21262d;
+}
+.detail-title { color: #f0f6fc; font-weight: 700; }
+.detail-meta { color: #8b949e; font-size: .72rem; margin-top: 3px; }
+.code-line {
+  white-space: pre-wrap;
+  word-break: break-word;
+  color: #d2a8ff;
+}
+.loading, .empty, .error {
+  color: #8b949e;
+  padding: 18px;
+  border: 1px solid #21262d;
+  border-radius: 8px;
+  background: #161b22;
+}
+.error { color: #ff7b72; }
+.toolbar {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+@media (max-width: 900px) {
+  .app-header, .view-header, .two-col { display: block; }
+  .two-col { grid-template-columns: 1fr; }
+  .detail-panel { position: static; max-height: none; margin-top: 16px; }
+}

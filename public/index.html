@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Coding Lens</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <header class="app-header">
+    <div>
+      <h1>AI Coding Lens</h1>
+      <p class="subtitle">Local AI coding activity across projects, sessions, models, tools, and agents.</p>
+    </div>
+    <button id="refresh-btn" class="icon-btn" type="button" title="Refresh data">Refresh</button>
+  </header>
+
+  <nav class="top-nav" id="top-nav" aria-label="Dashboard sections"></nav>
+
+  <section class="filters" aria-label="Global filters">
+    <label>
+      <span>Range</span>
+      <select id="range-filter">
+        <option value="today">Today</option>
+        <option value="7d" selected>7D</option>
+        <option value="30d">30D</option>
+        <option value="all">All</option>
+      </select>
+    </label>
+    <label>
+      <span>Source</span>
+      <select id="source-filter">
+        <option value="all">All Sources</option>
+        <option value="claude-code">Claude Code</option>
+      </select>
+    </label>
+    <label>
+      <span>Project</span>
+      <select id="project-filter">
+        <option value="all">All Projects</option>
+      </select>
+    </label>
+  </section>
+
+  <main id="app" class="app-main">
+    <div class="loading">Loading...</div>
+  </main>
+
+  <script type="module" src="/app.js"></script>
+</body>
+</html>
