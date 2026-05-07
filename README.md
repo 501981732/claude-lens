@@ -1,6 +1,6 @@
 # AI Coding Lens
 
-A local-first dashboard for visualizing your [Claude Code](https://claude.ai/code) activity — projects, sessions, agents, token costs, cache performance, tool calls, model usage, and daily breakdowns.
+A local-first dashboard for visualizing AI coding activity from local [Claude Code](https://claude.ai/code) and Codex data sources — projects, sessions, agents, token costs, cache performance, tool calls, model usage, and daily breakdowns.
 
 ![Claude Code Usage Dashboard](images/dashboard.png)
 
@@ -18,13 +18,13 @@ A local-first dashboard for visualizing your [Claude Code](https://claude.ai/cod
 
 ## Source support
 
-Current implemented source:
+Implemented sources:
 
 - Claude Code local data in `~/.claude`
+- Codex local data in `~/.codex`
 
 Planned future sources:
 
-- Codex
 - Cursor
 
 The v2 backend uses normalized events internally so additional sources can be added through adapters without rewriting the dashboard. Cloud sync, accounts, team dashboards, and remote storage are not included in this local-first version.
@@ -32,7 +32,7 @@ The v2 backend uses normalized events internally so additional sources can be ad
 ## Requirements
 
 - Node.js 18+
-- Claude Code installed (data lives in `~/.claude`)
+- Claude Code and/or Codex installed with local data in `~/.claude` and `~/.codex`
 
 ## Quick start
 
@@ -42,7 +42,7 @@ No install needed — run directly from GitHub:
 npx github:foyzulkarim/claude-lens
 ```
 
-Then open [http://localhost:3456](http://localhost:3456). Defaults to `~/.claude` if `CLAUDE_DIR` is not set.
+Then open [http://localhost:3456](http://localhost:3456). By default AI Coding Lens reads Claude Code data from `~/.claude` and Codex data from `~/.codex`.
 
 ## Local setup
 
@@ -53,7 +53,7 @@ npm install
 cp .env.example .env
 ```
 
-Edit `.env` and set `CLAUDE_DIR` to your Claude data directory (defaults to `~/.claude`).
+Edit `.env` if your local data lives outside the defaults. `CLAUDE_DIR` defaults to `~/.claude`; `CODEX_DIR` defaults to `~/.codex`.
 
 ```bash
 node server.js
@@ -74,6 +74,8 @@ All options are set via `.env`:
 | Variable           | Default | Description                          |
 |--------------------|---------|--------------------------------------|
 | `CLAUDE_DIR`       | `~/.claude` | Path to Claude data directory    |
+| `CODEX_DIR`        | `~/.codex` | Path to Codex data directory      |
+| `CODEX_INCLUDE_ARCHIVED` | `false` | Whether to include `~/.codex/archived_sessions` |
 | `RATE_INPUT`       | `5.0`   | Input token price (USD per 1M)       |
 | `RATE_OUTPUT`      | `25.0`  | Output token price (USD per 1M)      |
 | `RATE_CACHE_READ`  | `0.5`   | Cache read price (USD per 1M)        |
@@ -81,6 +83,13 @@ All options are set via `.env`:
 
 Default rates match **Bedrock cross-region inference (ap-southeast-2)**. For Anthropic API rates use `RATE_INPUT=15`, `RATE_OUTPUT=75`, `RATE_CACHE_READ=1.5`, `RATE_CACHE_CREATE=18.75`.
 
+## Codex limitations
+
+- Codex token cost is an estimate. It currently reuses the configured pricing rates, and `reasoning_output_tokens` are folded into `outputTokens` for cost estimation.
+- Archived Codex sessions are not scanned by default. Set `CODEX_INCLUDE_ARCHIVED=true` to include `~/.codex/archived_sessions`.
+- `logs_2.sqlite` is not read as the primary Codex data source.
+- Cursor support, cloud sync, and team dashboards remain future work.
+
 ## Local privacy
 
-AI Coding Lens reads local Claude Code logs and serves the dashboard locally. It does not upload data or run a remote collector.
+AI Coding Lens reads local Claude Code and Codex logs and serves the dashboard locally. It does not upload data or run a remote collector.
