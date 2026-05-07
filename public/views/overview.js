@@ -1,12 +1,14 @@
-import { api, dateTime, escapeHtml, fmt, metric, money, pct, table } from "../app.js";
+import { api, dateTime, escapeHtml, fmt, metric, money, pct, sourceBadge, table } from "../app.js";
 
 export async function renderOverview() {
-  const [overviewResponse, daily] = await Promise.all([api("/api/overview"), api("/api/daily-costs")]);
+  const [overviewResponse, daily, sources] = await Promise.all([api("/api/overview"), api("/api/daily-costs"), api("/api/sources")]);
   const data = overviewResponse.data;
+  const sourceSummary = sources.sources.map((source) => sourceBadge(source.id, source.enabled ? "Active" : "Planned")).join(" ");
   const projectRows = table(
-    [{ label: "Project" }, { label: "Cost", cls: "num" }, { label: "Sessions", cls: "num" }, { label: "Agents", cls: "num" }],
+    [{ label: "Source" }, { label: "Project" }, { label: "Cost", cls: "num" }, { label: "Sessions", cls: "num" }, { label: "Agents", cls: "num" }],
     data.topProjects.map((project) => `
       <tr>
+        <td>${sourceBadge(project.source)}</td>
         <td><span class="badge">${escapeHtml(project.shortName || project.projectId)}</span></td>
         <td class="num amber">${money(project.cost)}</td>
         <td class="num">${fmt(project.sessions)}</td>
@@ -43,6 +45,7 @@ export async function renderOverview() {
 
   return `
     <div class="view-header"><h2>Overview</h2><span class="muted">Scanned ${fmt(overviewResponse.meta.scannedFiles)} files · skipped ${fmt(overviewResponse.meta.skippedLines)} bad lines</span></div>
+    <div class="panel source-strip"><span class="metric-label">Sources</span><span>${sourceSummary}</span></div>
     <section class="grid">
       ${metric("Estimated Cost", money(data.cost), "amber")}
       ${metric("Sessions", fmt(data.sessions))}

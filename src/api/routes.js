@@ -200,6 +200,32 @@ function createRoutes(config) {
             status: meta.errors.length ? "warning" : "ok",
             meta,
           },
+          {
+            id: "codex",
+            name: "Codex",
+            enabled: false,
+            claudeDir: null,
+            status: "planned",
+            meta: {
+              source: "codex",
+              scannedFiles: 0,
+              skippedLines: 0,
+              errors: [],
+            },
+          },
+          {
+            id: "cursor",
+            name: "Cursor",
+            enabled: false,
+            claudeDir: null,
+            status: "planned",
+            meta: {
+              source: "cursor",
+              scannedFiles: 0,
+              skippedLines: 0,
+              errors: [],
+            },
+          },
         ],
         rates: config.rates,
       });

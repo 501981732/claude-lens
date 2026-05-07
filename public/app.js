@@ -28,6 +28,12 @@ const sourceFilter = document.getElementById("source-filter");
 const projectFilter = document.getElementById("project-filter");
 const refreshBtn = document.getElementById("refresh-btn");
 
+const sourceLabels = {
+  "claude-code": "Claude Code",
+  codex: "Codex",
+  cursor: "Cursor",
+};
+
 function initNav() {
   nav.innerHTML = Object.entries(views)
     .map(([id, view]) => `<button class="nav-tab ${id === state.view ? "active" : ""}" data-view="${id}" type="button">${view.label}</button>`)
@@ -95,6 +101,16 @@ export function metric(label, value, cls = "") {
   return `<div class="panel"><div class="metric-label">${label}</div><div class="metric-value ${cls}">${value}</div></div>`;
 }
 
+export function sourceName(source = "claude-code") {
+  return sourceLabels[source] || source || "-";
+}
+
+export function sourceBadge(source = "claude-code", status = "") {
+  const label = sourceName(source);
+  const suffix = status ? ` · ${status}` : "";
+  return `<span class="badge source-badge">${escapeHtml(label + suffix)}</span>`;
+}
+
 export function table(headers, rows, empty = "No data found") {
   if (!rows.length) return `<div class="empty">${empty}</div>`;
   return `<table><thead><tr>${headers.map((header) => `<th class="${header.cls || ""}">${header.label}</th>`).join("")}</tr></thead><tbody>${rows.join("")}</tbody></table>`;
@@ -124,6 +140,23 @@ async function populateProjects() {
   }
 }
 
+async function populateSources() {
+  try {
+    const data = await api("/api/sources");
+    const current = state.filters.source;
+    sourceFilter.innerHTML = '<option value="all">All Active Sources</option>' +
+      data.sources.map((source) => {
+        const status = source.enabled ? "Active" : "Planned";
+        const disabled = source.enabled ? "" : " disabled";
+        return `<option value="${escapeHtml(source.id)}"${disabled}>${escapeHtml(source.name)} (${status})</option>`;
+      }).join("");
+    sourceFilter.value = [...sourceFilter.options].some((option) => option.value === current && !option.disabled) ? current : "all";
+    state.filters.source = sourceFilter.value;
+  } catch {
+    sourceFilter.innerHTML = '<option value="all">All Active Sources</option><option value="claude-code">Claude Code (Active)</option>';
+  }
+}
+
 async function render() {
   nav.querySelectorAll(".nav-tab").forEach((tab) => tab.classList.toggle("active", tab.dataset.view === state.view));
   app.innerHTML = '<div class="loading">Loading...</div>';
@@ -148,6 +181,7 @@ function bindFilters() {
     render();
   });
   refreshBtn.addEventListener("click", async () => {
+    await populateSources();
     await populateProjects();
     render();
   });
@@ -155,5 +189,6 @@ function bindFilters() {
 
 initNav();
 bindFilters();
+await populateSources();
 await populateProjects();
 render();

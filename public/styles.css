@@ -144,6 +144,40 @@ tbody tr:hover td { background: #161b22; }
   border-radius: 4px;
   font-size: .72rem;
 }
+.source-badge {
+  color: #c9d1d9;
+  background: #21262d;
+  border: 1px solid #30363d;
+}
+.source-strip {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+.source-strip .badge {
+  margin-right: 6px;
+}
+.status-pill {
+  display: inline-block;
+  padding: 2px 7px;
+  border-radius: 4px;
+  border: 1px solid #30363d;
+  background: #21262d;
+  color: #c9d1d9;
+  font-size: .72rem;
+}
+.status-pill.ok {
+  color: #7ee787;
+  border-color: #238636;
+}
+.status-pill.warning {
+  color: #d29922;
+  border-color: #9e6a03;
+}
+.status-pill.planned {
+  color: #8b949e;
+}
 .two-col {
   display: grid;
   grid-template-columns: minmax(0, 1.4fr) minmax(320px, .8fr);

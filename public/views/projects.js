@@ -1,10 +1,11 @@
-import { api, dateTime, escapeHtml, fmt, money, renderDetail, table, pct } from "../app.js";
+import { api, dateTime, escapeHtml, fmt, money, renderDetail, sourceBadge, table, pct } from "../app.js";
 
 export async function renderProjects() {
   const projects = await api("/api/projects");
   setTimeout(() => bindProjectRows(), 0);
   const rows = projects.map((project) => `
     <tr class="clickable" data-project-id="${escapeHtml(project.projectId)}">
+      <td>${sourceBadge(project.source)}</td>
       <td><span class="badge">${escapeHtml(project.shortName || project.projectId)}</span><div class="detail-meta">${escapeHtml(project.projectId)}</div></td>
       <td class="num">${fmt(project.sessions)}</td>
       <td class="num">${fmt(project.messages)}</td>
@@ -19,7 +20,7 @@ export async function renderProjects() {
     <div class="view-header"><h2>Projects</h2><span class="muted">${fmt(projects.length)} projects</span></div>
     <section class="two-col">
       <div class="panel">${table([
-        { label: "Project" }, { label: "Sessions", cls: "num" }, { label: "Msgs", cls: "num" }, { label: "Tools", cls: "num" }, { label: "Agents", cls: "num" }, { label: "Top Model" }, { label: "Cache", cls: "num" }, { label: "Cost", cls: "num" }, { label: "Last Active" },
+        { label: "Source" }, { label: "Project" }, { label: "Sessions", cls: "num" }, { label: "Msgs", cls: "num" }, { label: "Tools", cls: "num" }, { label: "Agents", cls: "num" }, { label: "Top Model" }, { label: "Cache", cls: "num" }, { label: "Cost", cls: "num" }, { label: "Last Active" },
       ], rows)}</div>
       <div id="project-detail" class="panel detail-panel"><h3>Project Detail</h3><div class="muted">Select a project.</div></div>
     </section>`;
