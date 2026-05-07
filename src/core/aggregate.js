@@ -307,7 +307,7 @@ function aggregateTools(events, filters = {}) {
 
 function getToolDetails(events, toolName, filters = {}) {
   return applyFilters(events, filters)
-    .filter((event) => event.type === EVENT_TYPES.TOOL_CALL && event.payload.toolName === toolName)
+    .filter((event) => event.type === EVENT_TYPES.TOOL_CALL && (!toolName || event.payload.toolName === toolName))
     .sort((a, b) => String(b.timestamp || "").localeCompare(String(a.timestamp || "")))
     .map((event) => ({
       id: event.id,
