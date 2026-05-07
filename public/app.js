@@ -34,6 +34,13 @@ const sourceLabels = {
   cursor: "Cursor",
 };
 
+const sourceStatusLabels = {
+  ok: "Active",
+  warning: "Warning",
+  planned: "Planned",
+  not_configured: "Not configured",
+};
+
 function initNav() {
   nav.innerHTML = Object.entries(views)
     .map(([id, view]) => `<button class="nav-tab ${id === state.view ? "active" : ""}" data-view="${id}" type="button">${view.label}</button>`)
@@ -105,6 +112,10 @@ export function sourceName(source = "claude-code") {
   return sourceLabels[source] || source || "-";
 }
 
+export function sourceStatusLabel(status = "") {
+  return sourceStatusLabels[status] || status || "-";
+}
+
 export function sourceBadge(source = "claude-code", status = "") {
   const label = sourceName(source);
   const suffix = status ? ` · ${status}` : "";
@@ -146,9 +157,10 @@ async function populateSources() {
     const current = state.filters.source;
     sourceFilter.innerHTML = '<option value="all">All Active Sources</option>' +
       data.sources.map((source) => {
-        const status = source.enabled ? "Active" : "Planned";
-        const disabled = source.enabled ? "" : " disabled";
-        return `<option value="${escapeHtml(source.id)}"${disabled}>${escapeHtml(source.name)} (${status})</option>`;
+        const status = sourceStatusLabel(source.status);
+        const disabled = source.enabled === true ? "" : " disabled";
+        const label = source.id === "cursor" ? `${source.name} (${status})` : `${source.name || sourceName(source.id)} (${status})`;
+        return `<option value="${escapeHtml(source.id)}"${disabled}>${escapeHtml(label)}</option>`;
       }).join("");
     sourceFilter.value = [...sourceFilter.options].some((option) => option.value === current && !option.disabled) ? current : "all";
     state.filters.source = sourceFilter.value;

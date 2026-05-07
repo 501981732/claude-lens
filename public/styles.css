@@ -178,6 +178,10 @@ tbody tr:hover td { background: #161b22; }
 .status-pill.planned {
   color: #8b949e;
 }
+.status-pill.not-configured {
+  color: #8b949e;
+  border-color: #484f58;
+}
 .two-col {
   display: grid;
   grid-template-columns: minmax(0, 1.4fr) minmax(320px, .8fr);

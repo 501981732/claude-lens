@@ -1,16 +1,15 @@
-import { api, escapeHtml, fmt, sourceBadge } from "../app.js";
+import { api, escapeHtml, fmt, sourceBadge, sourceStatusLabel } from "../app.js";
+
+const statusClasses = {
+  ok: "ok",
+  warning: "warning",
+  planned: "planned",
+  not_configured: "not-configured",
+};
 
 export async function renderSettings() {
   const data = await api("/api/sources");
-  const rows = data.sources.map((source) => `
-    <tr>
-      <td>${sourceBadge(source.id)}</td>
-      <td><span class="status-pill ${escapeHtml(source.status)}">${escapeHtml(statusLabel(source))}</span></td>
-      <td>${escapeHtml(source.enabled ? "已接入" : "未接入，后续 adapter 预留")}</td>
-      <td>${escapeHtml(source.claudeDir || "-")}</td>
-      <td class="num">${fmt(source.meta?.scannedFiles || 0)}</td>
-      <td class="num">${fmt(source.meta?.skippedLines || 0)}</td>
-    </tr>`);
+  const rows = data.sources.map(sourceRow);
   return `
     <div class="view-header"><h2>Settings</h2><span class="muted">Local-only configuration</span></div>
     <section class="grid">
@@ -24,12 +23,44 @@ export async function renderSettings() {
 
 function tableMarkup(rows) {
   if (!rows.length) return '<div class="empty">No sources configured.</div>';
-  return `<table><thead><tr><th>Source</th><th>Status</th><th>说明</th><th>Data Directory</th><th class="num">Files</th><th class="num">Skipped Lines</th></tr></thead><tbody>${rows.join("")}</tbody></table>`;
+  return `<table><thead><tr><th>Source</th><th>Status</th><th>说明</th><th>Data Directory</th><th class="num">Files</th><th class="num">Skipped Lines</th><th>SQLite</th><th class="num">Threads</th><th class="num">Agent Links</th><th class="num">Dynamic Tools</th></tr></thead><tbody>${rows.join("")}</tbody></table>`;
 }
 
-function statusLabel(source) {
-  if (source.status === "ok") return "Active";
-  if (source.status === "warning") return "Warning";
-  if (source.status === "planned") return "Planned";
-  return source.status || "-";
+function sourceRow(source) {
+  const sqlite = source.meta?.sqlite;
+  return `
+    <tr>
+      <td>${sourceBadge(source.id)}</td>
+      <td><span class="status-pill ${statusClass(source.status)}">${escapeHtml(sourceStatusLabel(source.status))}</span></td>
+      <td>${escapeHtml(sourceDescription(source))}</td>
+      <td>${escapeHtml(dataDirectory(source))}</td>
+      <td class="num">${fmt(source.meta?.scannedFiles ?? 0)}</td>
+      <td class="num">${fmt(source.meta?.skippedLines ?? 0)}</td>
+      <td>${escapeHtml(sqliteAvailable(sqlite))}</td>
+      <td class="num">${sqlite ? fmt(sqlite.threadCount ?? 0) : "-"}</td>
+      <td class="num">${sqlite ? fmt(sqlite.spawnEdgeCount ?? 0) : "-"}</td>
+      <td class="num">${sqlite ? fmt(sqlite.dynamicToolCount ?? 0) : "-"}</td>
+    </tr>`;
+}
+
+function statusClass(status) {
+  return statusClasses[status] || "";
+}
+
+function sourceDescription(source) {
+  if (source.enabled) return "Available for filtering";
+  if (source.status === "planned") return "Adapter planned";
+  if (source.status === "not_configured") return "Directory not configured";
+  return "Unavailable";
+}
+
+function dataDirectory(source) {
+  if (source.id === "claude-code") return source.claudeDir || "-";
+  if (source.id === "codex") return source.codexDir || "-";
+  return "-";
+}
+
+function sqliteAvailable(sqlite) {
+  if (!sqlite) return "-";
+  return sqlite.available ? "Yes" : "No";
 }
