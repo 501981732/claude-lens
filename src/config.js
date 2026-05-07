@@ -10,11 +10,14 @@ function numberFromEnv(env, key, fallback) {
 
 function getConfig(env = process.env) {
   const home = env.HOME || os.homedir();
+  const cursorDir = env.CURSOR_DIR || path.join(home, ".cursor");
   return {
     port: Number.parseInt(env.PORT || "3456", 10),
     claudeDir: env.CLAUDE_DIR || path.join(home, ".claude"),
     codexDir: env.CODEX_DIR || path.join(home, ".codex"),
     codexIncludeArchived: env.CODEX_INCLUDE_ARCHIVED === "true",
+    cursorDir,
+    cursorAiTrackingDb: env.CURSOR_AI_TRACKING_DB || path.join(cursorDir, "ai-tracking", "ai-code-tracking.db"),
     rates: {
       input: numberFromEnv(env, "RATE_INPUT", 5.0) / 1e6,
       output: numberFromEnv(env, "RATE_OUTPUT", 25.0) / 1e6,

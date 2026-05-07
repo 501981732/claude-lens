@@ -14,6 +14,7 @@ const {
 } = require("../core/aggregate");
 const { loadClaudeCodeEvents, readHistory, readStats } = require("../sources/claude-code");
 const { loadCodexEvents } = require("../sources/codex");
+const { loadCursorEvents } = require("../sources/cursor");
 
 function queryFilters(query) {
   return {
@@ -63,14 +64,24 @@ function createRoutes(config) {
     }
   }
 
+  async function loadCursorSource() {
+    try {
+      return await loadCursorEvents(config.cursorDir, { aiTrackingDb: config.cursorAiTrackingDb });
+    } catch (err) {
+      return failedSource("cursor", err, { cursorDir: config.cursorDir, aiTrackingDb: config.cursorAiTrackingDb });
+    }
+  }
+
   async function loadSources(filters, options = {}) {
     const loadAllSources = options.loadAllSources || filters.source === "all";
     const shouldLoadClaude = loadAllSources || filters.source === "claude-code";
     const shouldLoadCodex = loadAllSources || filters.source === "codex";
+    const shouldLoadCursor = loadAllSources || filters.source === "cursor";
     const loaders = [];
 
     if (shouldLoadClaude) loaders.push(loadClaudeSource().then((loaded) => ["claude-code", loaded]));
     if (shouldLoadCodex) loaders.push(loadCodexSource().then((loaded) => ["codex", loaded]));
+    if (shouldLoadCursor) loaders.push(loadCursorSource().then((loaded) => ["cursor", loaded]));
 
     const entries = await Promise.all(loaders);
     const sources = Object.fromEntries(entries);
@@ -88,6 +99,7 @@ function createRoutes(config) {
       sourceMeta: {
         claude: sources["claude-code"],
         codex: sources.codex,
+        cursor: sources.cursor,
       },
     };
   }
@@ -258,7 +270,7 @@ function createRoutes(config) {
   router.get("/api/sources", async (req, res) => {
     try {
       const { sourceMeta } = await eventContext(req, { loadAllSources: true });
-      const { claude, codex } = sourceMeta;
+      const { claude, codex, cursor } = sourceMeta;
       res.json({
         sources: [
           {
@@ -280,15 +292,11 @@ function createRoutes(config) {
           {
             id: "cursor",
             name: "Cursor",
-            enabled: false,
-            claudeDir: null,
-            status: "planned",
-            meta: {
-              source: "cursor",
-              scannedFiles: 0,
-              skippedLines: 0,
-              errors: [],
-            },
+            enabled: cursor.meta.status === "ok" || cursor.meta.status === "warning",
+            cursorDir: config.cursorDir,
+            aiTrackingDb: config.cursorAiTrackingDb,
+            status: cursor.meta.status,
+            meta: cursor.meta,
           },
         ],
         rates: config.rates,
