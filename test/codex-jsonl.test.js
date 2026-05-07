@@ -40,6 +40,7 @@ test("parseCodexSessionFile emits normalized message, tool, and usage events", a
   assert.equal(tool.payload.toolName, "exec_command");
   assert.equal(tool.payload.command, "rg --files");
   assert.equal(tool.payload.exitCode, 0);
+  assert.equal(tool.payload.status, "completed");
 });
 
 test("parseCodexSessionFile emits custom tool and agent message events", async () => {
@@ -53,4 +54,23 @@ test("parseCodexSessionFile emits custom tool and agent message events", async (
 
   const assistant = result.events.find((event) => event.type === EVENT_TYPES.ASSISTANT_MESSAGE);
   assert.equal(assistant.payload.agent, true);
+});
+
+test("parseCodexSessionFile prefers JSONL cwd over thread cwd for projectId", async () => {
+  const result = await parseCodexSessionFile(fixture, {
+    thread: { id: "codex-parent-session", cwd: "/fallback/thread-cwd" },
+  });
+
+  const eventTypes = new Set([
+    EVENT_TYPES.USER_MESSAGE,
+    EVENT_TYPES.ASSISTANT_MESSAGE,
+    EVENT_TYPES.TOOL_CALL,
+    EVENT_TYPES.MODEL_USAGE,
+  ]);
+  const events = result.events.filter((event) => eventTypes.has(event.type));
+
+  assert.equal(events.length, 4);
+  for (const event of events) {
+    assert.equal(event.projectId, "/workspace/sample-project");
+  }
 });

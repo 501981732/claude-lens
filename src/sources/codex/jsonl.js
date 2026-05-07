@@ -37,7 +37,7 @@ function currentSessionId(state) {
 }
 
 function currentProjectId(state) {
-  return state.contextThread.cwd || state.sessionMeta.cwd || state.turnContext.cwd || "unknown";
+  return state.sessionMeta.cwd || state.turnContext.cwd || state.contextThread.cwd || "unknown";
 }
 
 function currentModel(state) {
@@ -210,6 +210,7 @@ function eventsFromRecord(record, state, lineNumber, toolEventsByCallId) {
         event.payload.durationMs = payload.duration_ms ?? null;
         event.payload.cwd = payload.cwd || event.payload.workdir || "";
         event.payload.command = payload.cmd || event.payload.command || null;
+        event.payload.status = payload.status || "";
       }
     }
   }
