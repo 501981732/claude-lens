@@ -23,7 +23,7 @@ export async function renderSettings() {
 
 function tableMarkup(rows) {
   if (!rows.length) return '<div class="empty">No sources configured.</div>';
-  return `<table><thead><tr><th>Source</th><th>Status</th><th>说明</th><th>Data Directory</th><th class="num">Files</th><th class="num">Skipped Lines</th><th>SQLite</th><th class="num">Threads</th><th class="num">Agent Links</th><th class="num">Dynamic Tools</th></tr></thead><tbody>${rows.join("")}</tbody></table>`;
+  return `<div class="table-scroll"><table><thead><tr><th>Source</th><th>Status</th><th>说明</th><th class="path-cell">Data Directory</th><th class="num">Files</th><th class="num">Skipped Lines</th><th>SQLite</th><th class="num">Threads</th><th class="num">Agent Links</th><th class="num">Dynamic Tools</th></tr></thead><tbody>${rows.join("")}</tbody></table></div>`;
 }
 
 function sourceRow(source) {
@@ -33,7 +33,7 @@ function sourceRow(source) {
       <td>${sourceBadge(source.id)}</td>
       <td><span class="status-pill ${statusClass(source.status)}">${escapeHtml(sourceStatusLabel(source.status))}</span></td>
       <td>${escapeHtml(sourceDescription(source))}</td>
-      <td>${escapeHtml(dataDirectory(source))}</td>
+      <td class="path-cell">${escapeHtml(dataDirectory(source))}</td>
       <td class="num">${fmt(source.meta?.scannedFiles ?? 0)}</td>
       <td class="num">${fmt(source.meta?.skippedLines ?? 0)}</td>
       <td>${escapeHtml(sqliteAvailable(sqlite))}</td>

@@ -132,6 +132,13 @@ td {
 tbody tr:hover td { background: #161b22; }
 .clickable { cursor: pointer; }
 .num { text-align: right; font-variant-numeric: tabular-nums; }
+.table-scroll {
+  overflow-x: auto;
+}
+.path-cell {
+  min-width: 220px;
+  word-break: break-all;
+}
 .badge {
   display: inline-block;
   max-width: 260px;

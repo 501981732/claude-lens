@@ -155,18 +155,29 @@ async function populateSources() {
   try {
     const data = await api("/api/sources");
     const current = state.filters.source;
-    sourceFilter.innerHTML = '<option value="all">All Active Sources</option>' +
-      data.sources.map((source) => {
-        const status = sourceStatusLabel(source.status);
-        const disabled = source.enabled === true ? "" : " disabled";
-        const label = source.id === "cursor" ? `${source.name} (${status})` : `${source.name || sourceName(source.id)} (${status})`;
-        return `<option value="${escapeHtml(source.id)}"${disabled}>${escapeHtml(label)}</option>`;
-      }).join("");
+    sourceFilter.replaceChildren();
+    sourceFilter.appendChild(sourceOption("all", "All Active Sources"));
+    data.sources.forEach((source) => {
+      const status = sourceStatusLabel(source.status);
+      const name = source.name || (source.id ? sourceName(source.id) : "Unknown");
+      sourceFilter.appendChild(sourceOption(source.id || "", `${name} (${status})`, source.enabled !== true));
+    });
     sourceFilter.value = [...sourceFilter.options].some((option) => option.value === current && !option.disabled) ? current : "all";
     state.filters.source = sourceFilter.value;
   } catch {
-    sourceFilter.innerHTML = '<option value="all">All Active Sources</option><option value="claude-code">Claude Code (Active)</option>';
+    sourceFilter.replaceChildren(
+      sourceOption("all", "All Active Sources"),
+      sourceOption("claude-code", "Claude Code (Active)"),
+    );
   }
+}
+
+function sourceOption(value, label, disabled = false) {
+  const option = document.createElement("option");
+  option.value = value;
+  option.textContent = label;
+  option.disabled = disabled;
+  return option;
 }
 
 async function render() {
