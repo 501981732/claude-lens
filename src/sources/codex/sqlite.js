@@ -39,7 +39,10 @@ async function readCodexState(sqlitePath) {
     const [threadRows, spawnEdges, dynamicTools] = await Promise.all([
       runSqliteJson(sqlitePath, "SELECT * FROM threads;"),
       runSqliteJson(sqlitePath, "SELECT * FROM thread_spawn_edges;"),
-      runSqliteJson(sqlitePath, "SELECT * FROM thread_dynamic_tools ORDER BY thread_id, position;"),
+      runSqliteJson(
+        sqlitePath,
+        "SELECT thread_id, position, name, namespace, defer_loading FROM thread_dynamic_tools ORDER BY thread_id, position;",
+      ),
     ]);
     const threads = new Map();
     for (const row of threadRows) {
