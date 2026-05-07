@@ -7,6 +7,7 @@ const os = require("node:os");
 
 const { createApp } = require("../src/server");
 const { createCodexFixtureDb } = require("./helpers/create-codex-fixture-db");
+const { createCursorFixtureDb } = require("./helpers/create-cursor-fixture-db");
 
 const claudeFixtureDir = path.join(__dirname, "fixtures", "claude-home");
 const codexFixtureDir = path.join(__dirname, "fixtures", "codex-home");
@@ -15,6 +16,8 @@ const config = {
   claudeDir: claudeFixtureDir,
   codexDir: codexFixtureDir,
   codexIncludeArchived: false,
+  cursorDir: path.join(__dirname, "fixtures", "cursor-home"),
+  cursorAiTrackingDb: path.join(__dirname, "fixtures", "cursor-home", "ai-tracking", "ai-code-tracking.db"),
   rates,
 };
 
@@ -123,4 +126,41 @@ test("GET /api/agents supports source=codex", async (t) => {
     assert.equal(response.statusCode, 200);
     assert.ok(response.body.totalAgentCalls >= 1);
   }, { codexDir: tmp });
+});
+
+test("GET /api/sources reports Cursor as active when fixture DB exists", async (t) => {
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "claude-lens-cursor-"));
+  t.after(() => fs.rmSync(tmp, { recursive: true, force: true }));
+  const created = await createCursorFixtureDb(tmp);
+  if (created.skipped) return t.skip(created.reason);
+
+  await withServer(
+    async (server) => {
+      const response = await request(server, "/api/sources");
+      const cursor = response.body.sources.find((source) => source.id === "cursor");
+      assert.equal(cursor.enabled, true);
+      assert.equal(cursor.status, "ok");
+      assert.equal(cursor.cursorDir, tmp);
+      assert.equal(cursor.aiTrackingDb, created.path);
+    },
+    { cursorDir: tmp, cursorAiTrackingDb: created.path },
+  );
+});
+
+test("GET /api/overview supports source=cursor", async (t) => {
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "claude-lens-cursor-overview-"));
+  t.after(() => fs.rmSync(tmp, { recursive: true, force: true }));
+  const created = await createCursorFixtureDb(tmp);
+  if (created.skipped) return t.skip(created.reason);
+
+  await withServer(
+    async (server) => {
+      const response = await request(server, "/api/overview?source=cursor");
+      assert.equal(response.statusCode, 200);
+      assert.equal(response.body.data.toolCalls, 3);
+      assert.equal(response.body.data.cost, 0);
+      assert.equal(response.body.meta.sources.cursor.status, "ok");
+    },
+    { cursorDir: tmp, cursorAiTrackingDb: created.path },
+  );
 });
