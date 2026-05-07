@@ -44,7 +44,7 @@ test("readCodexState handles missing sqlite file", async () => {
   assert.deepEqual(result.dynamicTools, []);
 });
 
-test("readCodexState avoids loading large dynamic tool schemas", async (t) => {
+test("readCodexState avoids loading large text columns", async (t) => {
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "codex-state-large-"));
   t.after(() => fs.rmSync(tmp, { recursive: true, force: true }));
   const created = await createCodexFixtureDb(tmp);
@@ -54,12 +54,15 @@ test("readCodexState avoids loading large dynamic tool schemas", async (t) => {
   const largeSchema = "x".repeat(2 * 1024 * 1024);
   await runSqlite(
     sqlitePath,
-    `UPDATE thread_dynamic_tools SET description = '${largeSchema}', input_schema = '${largeSchema}';`,
+    `ALTER TABLE threads ADD COLUMN first_user_message TEXT;
+     UPDATE threads SET first_user_message = '${largeSchema}';
+     UPDATE thread_dynamic_tools SET description = '${largeSchema}', input_schema = '${largeSchema}';`,
   );
 
   const result = await readCodexState(sqlitePath);
 
   assert.equal(result.available, true);
+  assert.equal(result.threads.get("codex-parent-session").first_user_message, undefined);
   assert.equal(result.dynamicTools.length, 1);
   assert.equal(result.dynamicTools[0].name, "exec_command");
   assert.equal(result.dynamicTools[0].input_schema, undefined);

@@ -37,7 +37,14 @@ async function readCodexState(sqlitePath) {
 
   try {
     const [threadRows, spawnEdges, dynamicTools] = await Promise.all([
-      runSqliteJson(sqlitePath, "SELECT * FROM threads;"),
+      runSqliteJson(
+        sqlitePath,
+        [
+          "SELECT id, rollout_path, created_at_ms, updated_at_ms, source, model_provider, cwd, title, tokens_used,",
+          "model, reasoning_effort, agent_nickname, agent_role, agent_path, git_branch, git_sha, git_origin_url",
+          "FROM threads;",
+        ].join(" "),
+      ),
       runSqliteJson(sqlitePath, "SELECT * FROM thread_spawn_edges;"),
       runSqliteJson(
         sqlitePath,
