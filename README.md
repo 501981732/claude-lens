@@ -2,17 +2,17 @@
 
 A local-first dashboard for visualizing AI coding activity from local [Claude Code](https://claude.ai/code) and Codex data sources — projects, sessions, agents, token costs, cache performance, tool calls, model usage, and daily breakdowns.
 
-![Claude Code Usage Dashboard](images/dashboard.png)
+![AI Coding Lens Dashboard](images/dashboard.png)
 
 ## Features
 
 - **Overview dashboard** — sessions, messages, tool calls, agent calls, estimated cost, cache hit rate
 - **Session analysis** — inspect sessions by project, model mix, cost, tools, agents, duration, and timeline
-- **Agent analysis** — see Claude Code `Agent` tool usage by agent type, related sessions, related tools, and estimated assisted cost
+- **Agent analysis** — see agent events by agent type, related sessions, related tools, and estimated assisted cost; Codex agent events come from thread/spawn metadata where available
 - **Project analytics** — compare projects by sessions, messages, tool calls, agent calls, model usage, cache hit, and cost
 - **Cache performance** — hit rate, savings vs no-cache baseline
 - **Daily cost & cache table** — per-day token breakdown with estimated spend
-- **Tool call analytics** — which tools Claude used most, across all projects
+- **Tool call analytics** — which tools were used most across sources/projects
 - **Model analytics** — response counts, tokens, cache usage, and estimated cost by model
 - **Configurable pricing** — swap between Bedrock and Anthropic API rates via `.env`
 
@@ -32,7 +32,7 @@ The v2 backend uses normalized events internally so additional sources can be ad
 ## Requirements
 
 - Node.js 18+
-- Claude Code and/or Codex installed with local data in `~/.claude` and `~/.codex`
+- Claude Code and/or Codex installed; AI Coding Lens reads Claude data from `~/.claude` and Codex data from `~/.codex` when present
 
 ## Quick start
 
@@ -87,7 +87,8 @@ Default rates match **Bedrock cross-region inference (ap-southeast-2)**. For Ant
 
 - Codex token cost is an estimate. It currently reuses the configured pricing rates, and `reasoning_output_tokens` are folded into `outputTokens` for cost estimation.
 - Archived Codex sessions are not scanned by default. Set `CODEX_INCLUDE_ARCHIVED=true` to include `~/.codex/archived_sessions`.
-- `logs_2.sqlite` is not read as the primary Codex data source.
+- `logs_2.sqlite` is not read.
+- Codex support currently uses `state_5.sqlite` metadata plus JSONL session files (`sessions/**/*.jsonl`, optional `archived_sessions`).
 - Cursor support, cloud sync, and team dashboards remain future work.
 
 ## Local privacy
