@@ -24,6 +24,7 @@ function baseMeta(codexDir, status, sqlite = { available: false, threadCount: 0,
     codexDir,
     scannedFiles: 0,
     skippedLines: 0,
+    duplicateSessionCount: 0,
     errors: [],
     sqlite,
   };
@@ -65,15 +66,22 @@ async function readJsonlMetadata(filePath, idField) {
   return data;
 }
 
-async function collectJsonlFiles(rootDir, recursive) {
+async function collectJsonlFiles(rootDir, recursive, errors) {
   const files = [];
   if (!fs.existsSync(rootDir)) return files;
 
-  const entries = await fs.promises.readdir(rootDir, { withFileTypes: true });
+  let entries;
+  try {
+    entries = await fs.promises.readdir(rootDir, { withFileTypes: true });
+  } catch (err) {
+    errors.push({ file: rootDir, message: err.message });
+    return files;
+  }
+
   for (const entry of entries) {
     const entryPath = path.join(rootDir, entry.name);
     if (entry.isDirectory() && recursive) {
-      files.push(...(await collectJsonlFiles(entryPath, recursive)));
+      files.push(...(await collectJsonlFiles(entryPath, recursive, errors)));
     } else if (entry.isFile() && entry.name.endsWith(".jsonl")) {
       files.push(entryPath);
     }
@@ -82,7 +90,7 @@ async function collectJsonlFiles(rootDir, recursive) {
   return files;
 }
 
-async function collectSessionFiles(codexDir, state, includeArchived) {
+async function collectSessionFiles(codexDir, state, includeArchived, errors) {
   const files = [];
   const seen = new Set();
   let hasMissingRollout = false;
@@ -101,7 +109,7 @@ async function collectSessionFiles(codexDir, state, includeArchived) {
   }
 
   if (!state.available || hasMissingRollout || files.length === 0) {
-    const sessionFiles = await collectJsonlFiles(path.join(codexDir, "sessions"), true);
+    const sessionFiles = await collectJsonlFiles(path.join(codexDir, "sessions"), true, errors);
     for (const filePath of sessionFiles) {
       const resolved = path.resolve(filePath);
       if (!seen.has(resolved)) {
@@ -112,7 +120,7 @@ async function collectSessionFiles(codexDir, state, includeArchived) {
   }
 
   if (includeArchived) {
-    const archivedFiles = await collectJsonlFiles(path.join(codexDir, "archived_sessions"), false);
+    const archivedFiles = await collectJsonlFiles(path.join(codexDir, "archived_sessions"), false, errors);
     for (const filePath of archivedFiles) {
       const resolved = path.resolve(filePath);
       if (!seen.has(resolved)) {
@@ -203,15 +211,11 @@ async function loadCodexEvents(codexDir, options = {}) {
     readJsonlMetadata(path.join(codexDir, "history.jsonl"), "session_id"),
     readJsonlMetadata(path.join(codexDir, "session_index.jsonl"), "id"),
   ]);
-  meta.historyCount = history.count;
-  meta.sessionIndexCount = sessionIndex.count;
-  meta.sessionTitles = Array.from(sessionIndex.byId.values()).map((record) => ({
-    sessionId: record.id,
-    title: record.thread_name || record.title || "",
-  }));
+  meta.history = { count: history.count };
+  meta.sessionIndex = { count: sessionIndex.count };
   meta.errors.push(...history.errors, ...sessionIndex.errors);
 
-  const sessionFiles = await collectSessionFiles(codexDir, state, options.includeArchived === true);
+  const sessionFiles = await collectSessionFiles(codexDir, state, options.includeArchived === true, meta.errors);
   const events = [];
   const seenSessionIds = new Set();
 
@@ -221,7 +225,9 @@ async function loadCodexEvents(codexDir, options = {}) {
         thread,
       });
       const parsedSessionId = sessionIdFromEvents(result.events);
-      if (options.includeArchived === true && parsedSessionId && seenSessionIds.has(parsedSessionId)) {
+      if (parsedSessionId && seenSessionIds.has(parsedSessionId)) {
+        meta.duplicateSessionCount++;
+        meta.errors.push({ file: filePath, message: `Duplicate Codex session skipped: ${parsedSessionId}` });
         continue;
       }
       if (parsedSessionId) seenSessionIds.add(parsedSessionId);
