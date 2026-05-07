@@ -26,25 +26,78 @@ function queryFilters(query) {
 function createRoutes(config) {
   const router = express.Router();
 
-  async function eventContext(req) {
-    const [claude, codex] = await Promise.all([
-      loadClaudeCodeEvents(config.claudeDir),
-      loadCodexEvents(config.codexDir, { includeArchived: config.codexIncludeArchived }),
-    ]);
+  function failedSource(source, err, extra = {}) {
+    return {
+      events: [],
+      meta: {
+        source,
+        status: "warning",
+        scannedFiles: 0,
+        skippedLines: 0,
+        errors: [{ message: err.message }],
+        ...extra,
+      },
+    };
+  }
+
+  async function loadClaudeSource() {
+    try {
+      const loaded = await loadClaudeCodeEvents(config.claudeDir);
+      return {
+        events: loaded.events,
+        meta: {
+          status: (loaded.meta.errors || []).length ? "warning" : "ok",
+          ...loaded.meta,
+        },
+      };
+    } catch (err) {
+      return failedSource("claude-code", err, { claudeDir: config.claudeDir });
+    }
+  }
+
+  async function loadCodexSource() {
+    try {
+      return await loadCodexEvents(config.codexDir, { includeArchived: config.codexIncludeArchived });
+    } catch (err) {
+      return failedSource("codex", err, { codexDir: config.codexDir });
+    }
+  }
+
+  async function loadSources(filters, options = {}) {
+    const loadAllSources = options.loadAllSources || filters.source === "all";
+    const shouldLoadClaude = loadAllSources || filters.source === "claude-code";
+    const shouldLoadCodex = loadAllSources || filters.source === "codex";
+    const loaders = [];
+
+    if (shouldLoadClaude) loaders.push(loadClaudeSource().then((loaded) => ["claude-code", loaded]));
+    if (shouldLoadCodex) loaders.push(loadCodexSource().then((loaded) => ["codex", loaded]));
+
+    const entries = await Promise.all(loaders);
+    const sources = Object.fromEntries(entries);
+    const loaded = Object.values(sources);
 
     return {
-      events: [...claude.events, ...codex.events],
+      events: loaded.flatMap((source) => source.events),
       meta: {
-        sources: {
-          "claude-code": claude.meta,
-          codex: codex.meta,
-        },
-        scannedFiles: (claude.meta.scannedFiles || 0) + (codex.meta.scannedFiles || 0),
-        skippedLines: (claude.meta.skippedLines || 0) + (codex.meta.skippedLines || 0),
-        errors: [...(claude.meta.errors || []), ...(codex.meta.errors || [])],
+        source: filters.source || "all",
+        sources: Object.fromEntries(Object.entries(sources).map(([id, source]) => [id, source.meta])),
+        scannedFiles: loaded.reduce((total, source) => total + (source.meta.scannedFiles || 0), 0),
+        skippedLines: loaded.reduce((total, source) => total + (source.meta.skippedLines || 0), 0),
+        errors: loaded.flatMap((source) => source.meta.errors || []),
       },
-      sourceMeta: { claude, codex },
-      filters: queryFilters(req.query),
+      sourceMeta: {
+        claude: sources["claude-code"],
+        codex: sources.codex,
+      },
+    };
+  }
+
+  async function eventContext(req, options) {
+    const filters = queryFilters(req.query);
+    const loaded = await loadSources(filters, options);
+    return {
+      ...loaded,
+      filters,
     };
   }
 
@@ -204,7 +257,7 @@ function createRoutes(config) {
 
   router.get("/api/sources", async (req, res) => {
     try {
-      const { sourceMeta } = await eventContext(req);
+      const { sourceMeta } = await eventContext(req, { loadAllSources: true });
       const { claude, codex } = sourceMeta;
       res.json({
         sources: [

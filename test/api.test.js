@@ -86,8 +86,34 @@ test("GET /api/overview supports source=codex", async () => {
   });
 });
 
+test("GET /api/overview?source=codex ignores broken Claude source", async (t) => {
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "claude-lens-broken-claude-"));
+  t.after(() => fs.rmSync(tmp, { recursive: true, force: true }));
+  fs.writeFileSync(path.join(tmp, "projects"), "not a directory");
+
+  await withServer(async (server) => {
+    const response = await request(server, "/api/overview?source=codex");
+    assert.equal(response.statusCode, 200);
+    assert.ok(response.body.data.sessions >= 1);
+    assert.ok(response.body.data.toolCalls >= 1);
+  }, { claudeDir: tmp });
+});
+
+test("GET /api/overview keeps compatible source meta", async () => {
+  await withServer(async (server) => {
+    const response = await request(server, "/api/overview");
+    assert.equal(response.statusCode, 200);
+    assert.equal(response.body.meta.source, "all");
+    assert.equal(typeof response.body.meta.scannedFiles, "number");
+    assert.equal(typeof response.body.meta.skippedLines, "number");
+    assert.ok(Array.isArray(response.body.meta.errors));
+    assert.ok(response.body.meta.sources.codex);
+  });
+});
+
 test("GET /api/agents supports source=codex", async (t) => {
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "claude-lens-codex-"));
+  t.after(() => fs.rmSync(tmp, { recursive: true, force: true }));
   fs.cpSync(codexFixtureDir, tmp, { recursive: true });
   const db = await createCodexFixtureDb(tmp);
   if (db.skipped) return t.skip(db.reason);
