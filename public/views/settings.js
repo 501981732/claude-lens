@@ -23,11 +23,12 @@ export async function renderSettings() {
 
 function tableMarkup(rows) {
   if (!rows.length) return '<div class="empty">No sources configured.</div>';
-  return `<div class="table-scroll"><table><thead><tr><th>Source</th><th>Status</th><th>说明</th><th class="path-cell">Data Directory</th><th class="num">Files</th><th class="num">Skipped Lines</th><th>SQLite</th><th class="num">Threads</th><th class="num">Agent Links</th><th class="num">Dynamic Tools</th></tr></thead><tbody>${rows.join("")}</tbody></table></div>`;
+  return `<div class="table-scroll"><table><thead><tr><th>Source</th><th>Status</th><th>说明</th><th class="path-cell">Data Directory</th><th class="num">Files</th><th class="num">Skipped Lines</th><th>SQLite</th><th class="num">Records</th><th class="num">Agent Links</th><th class="num">Dynamic Tools</th></tr></thead><tbody>${rows.join("")}</tbody></table></div>`;
 }
 
 function sourceRow(source) {
   const sqlite = source.meta?.sqlite;
+  const records = sqliteRecordCount(source, sqlite);
   return `
     <tr>
       <td>${sourceBadge(source.id)}</td>
@@ -37,7 +38,7 @@ function sourceRow(source) {
       <td class="num">${fmt(source.meta?.scannedFiles ?? 0)}</td>
       <td class="num">${fmt(source.meta?.skippedLines ?? 0)}</td>
       <td>${escapeHtml(sqliteAvailable(sqlite))}</td>
-      <td class="num">${sqlite ? fmt(sqlite.threadCount ?? 0) : "-"}</td>
+      <td class="num">${records == null ? "-" : fmt(records)}</td>
       <td class="num">${sqlite ? fmt(sqlite.spawnEdgeCount ?? 0) : "-"}</td>
       <td class="num">${sqlite ? fmt(sqlite.dynamicToolCount ?? 0) : "-"}</td>
     </tr>`;
@@ -48,6 +49,7 @@ function statusClass(status) {
 }
 
 function sourceDescription(source) {
+  if (source.id === "cursor" && source.enabled) return "Available; token usage is not provided by Cursor tracking DB";
   if (source.enabled) return "Available for filtering";
   if (source.status === "planned") return "Adapter planned";
   if (source.status === "not_configured") return "Directory not configured";
@@ -57,7 +59,21 @@ function sourceDescription(source) {
 function dataDirectory(source) {
   if (source.id === "claude-code") return source.claudeDir || "-";
   if (source.id === "codex") return source.codexDir || "-";
+  if (source.id === "cursor") return source.aiTrackingDb || source.cursorDir || "-";
   return "-";
+}
+
+function sqliteRecordCount(source, sqlite) {
+  if (!sqlite) return null;
+  if (source.id === "cursor") {
+    return (
+      (sqlite.aiCodeHashCount || 0) +
+      (sqlite.conversationSummaryCount || 0) +
+      (sqlite.deletedFileCount || 0) +
+      (sqlite.scoredCommitCount || 0)
+    );
+  }
+  return sqlite.threadCount ?? null;
 }
 
 function sqliteAvailable(sqlite) {
