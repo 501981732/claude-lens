@@ -13,6 +13,7 @@ const {
   getToolDetails,
 } = require("../core/aggregate");
 const { loadClaudeCodeEvents, readHistory, readStats } = require("../sources/claude-code");
+const { loadCodexEvents } = require("../sources/codex");
 
 function queryFilters(query) {
   return {
@@ -26,10 +27,23 @@ function createRoutes(config) {
   const router = express.Router();
 
   async function eventContext(req) {
-    const loaded = await loadClaudeCodeEvents(config.claudeDir);
+    const [claude, codex] = await Promise.all([
+      loadClaudeCodeEvents(config.claudeDir),
+      loadCodexEvents(config.codexDir, { includeArchived: config.codexIncludeArchived }),
+    ]);
+
     return {
-      events: loaded.events,
-      meta: loaded.meta,
+      events: [...claude.events, ...codex.events],
+      meta: {
+        sources: {
+          "claude-code": claude.meta,
+          codex: codex.meta,
+        },
+        scannedFiles: (claude.meta.scannedFiles || 0) + (codex.meta.scannedFiles || 0),
+        skippedLines: (claude.meta.skippedLines || 0) + (codex.meta.skippedLines || 0),
+        errors: [...(claude.meta.errors || []), ...(codex.meta.errors || [])],
+      },
+      sourceMeta: { claude, codex },
       filters: queryFilters(req.query),
     };
   }
@@ -172,7 +186,8 @@ function createRoutes(config) {
   router.get("/api/agents", async (req, res) => {
     try {
       const { events, filters } = await eventContext(req);
-      res.json(aggregateAgents(events, config.rates, filters));
+      const data = aggregateAgents(events, config.rates, filters);
+      res.json({ ...data, totalAgentCalls: data.summary.totalAgentCalls });
     } catch (err) {
       sendError(res, err);
     }
@@ -189,7 +204,8 @@ function createRoutes(config) {
 
   router.get("/api/sources", async (req, res) => {
     try {
-      const { meta } = await eventContext(req);
+      const { sourceMeta } = await eventContext(req);
+      const { claude, codex } = sourceMeta;
       res.json({
         sources: [
           {
@@ -197,21 +213,16 @@ function createRoutes(config) {
             name: "Claude Code",
             enabled: true,
             claudeDir: config.claudeDir,
-            status: meta.errors.length ? "warning" : "ok",
-            meta,
+            status: (claude.meta.errors || []).length ? "warning" : "ok",
+            meta: claude.meta,
           },
           {
             id: "codex",
             name: "Codex",
-            enabled: false,
-            claudeDir: null,
-            status: "planned",
-            meta: {
-              source: "codex",
-              scannedFiles: 0,
-              skippedLines: 0,
-              errors: [],
-            },
+            enabled: codex.meta.status === "ok" || codex.meta.status === "warning",
+            codexDir: config.codexDir,
+            status: codex.meta.status,
+            meta: codex.meta,
           },
           {
             id: "cursor",
